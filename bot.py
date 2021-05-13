@@ -82,14 +82,20 @@ def get_toxic():
 
         for item in item_list:
             if item == shadow_amulet:
-                toxic_list.append(response)
+                toxic_list.append((response, "bought a Shadow Amulet"))
+
+        empty_inv = 0
+        for item in item_list:
+            empty_inv += item
+        if empty_inv == 0:
+            toxic_list.append((response, "destroyed all his items"))
 
     with open('heroes.json') as heroes_files:
         heroes = json.load(heroes_files)["heroes"]
 
     heroes_files.close()
 
-    toxic = toxic_list[0]
+    toxic = toxic_list[0][0]
     hero_id = toxic["hero_id"]
 
     for hero in heroes:
@@ -101,8 +107,10 @@ def get_toxic():
 
     kills = toxic["kills"]
     deaths = toxic["deaths"]
-    text = "Jacko recently bought a Shadow Amulet in a game as {0}, dying {1} times and getting {2} kills.".format(
-        hero_name, deaths, kills)
+    reason = toxic_list[0][1]
+
+    text = "Jacko recently {0} in a game as {1}, dying {2} times and getting {3} kills.".format(reason,
+                                                                                                hero_name, deaths, kills)
     return (text, dotabuff_url)
 
 
