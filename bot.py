@@ -11,17 +11,14 @@ from dataclasses import dataclass
 shadow_amulet = 215
 load_dotenv()
 
-
-@dataclass
-class Match:
-    match_id: str
-    player_slot: int
+# Concurrent
 
 
 def request_get(url):
     return requests.get(url)
 
 
+# Implement check further
 def check_valid_status_code(request):
     if request.status_code == 200:
         return request.json()
@@ -41,9 +38,7 @@ def get_matches():
 
     matches_list = []
     for match in matches:
-        m_id = match["match_id"]
-        p_slot = match["player_slot"]
-        matches_list.append(Match(m_id, p_slot))
+        matches_list.append((match["match_id"], match["player_slot"]))
 
     return matches_list
 
@@ -54,7 +49,7 @@ def get_sa_games():
     match_urls = []
     for match in matches_list:
         match_urls.append(
-            "https://api.opendota.com/api/matches/{0}".format(match.match_id))
+            "https://api.opendota.com/api/matches/{0}".format(match[0]))
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         match_response = [executor.submit(
@@ -67,7 +62,7 @@ def get_sa_games():
         data = match_response[i].result().json()
         players = data["players"]
         for player in players:
-            if player["player_slot"] == matches_list[i].player_slot:
+            if player["player_slot"] == matches_list[i][1]:
                 my_response.append(player)
     return my_response
 
@@ -79,15 +74,11 @@ def get_toxic():
     for response in get_sa_games():
         item_list = []
 
-        item_list.append(response["item_0"])
-        item_list.append(response["item_1"])
-        item_list.append(response["item_2"])
-        item_list.append(response["item_3"])
-        item_list.append(response["item_4"])
-        item_list.append(response["item_5"])
-        item_list.append(response["backpack_0"])
-        item_list.append(response["backpack_1"])
-        item_list.append(response["backpack_2"])
+        for i in range(6):
+            item_list.append(response["item_{0}".format(i)])
+
+        for j in range(3):
+            item_list.append(response["backpack_{0}".format(j)])
 
         for item in item_list:
             if item == shadow_amulet:
@@ -110,7 +101,6 @@ def get_toxic():
 
     kills = toxic["kills"]
     deaths = toxic["deaths"]
-    assists = toxic["assists"]
     text = "Jacko recently bought a Shadow Amulet in a game as {0}, dying {1} times and getting {2} kills.".format(
         hero_name, deaths, kills)
     return (text, dotabuff_url)
@@ -119,7 +109,7 @@ def get_toxic():
 client = discord.Client()
 
 
-@client.event
+@ client.event
 async def on_ready():
     print(f'{client.user} has connected to Discord!')
     for guild in client.guilds:
@@ -131,7 +121,7 @@ async def on_ready():
     )
 
 
-@client.event
+@ client.event
 async def on_message(message):
     if message.author == client.user:
         return
