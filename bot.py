@@ -130,7 +130,8 @@ async def on_message(message):
         return
 
     if message.content == '!shadow':
-        response = create_message()
+        async with message.channel.typing():
+            response = create_message()
 
         await message.channel.send(response[0])
         await message.channel.send(response[1])
