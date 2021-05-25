@@ -83,6 +83,10 @@ def get_toxic():
         if empty_inv == 0:
             toxic_list.append((response, "destroyed all his items"))
 
+        # response["leaver_status"] == 2 Bryce told me to add this
+        if response["leaver_status"] == 2 or response["leaver_status"] == 3:
+            toxic_list.append((response, "abandoned"))
+
     return toxic_list
 
 
@@ -94,7 +98,10 @@ def create_message():
 
     tlist = get_toxic()
 
-    toxic = tlist[0][0]
+    if len(tlist) != 0:
+        toxic = tlist[0][0]
+    else:
+        return ("Jacko has been very well behaved, no toxicity found!", False)
 
     hero_id = toxic["hero_id"]
     kills = toxic["kills"]
@@ -134,7 +141,8 @@ async def on_message(message):
             response = create_message()
 
         await message.channel.send(response[0])
-        await message.channel.send(response[1])
+        if response[1]:
+            await message.channel.send(response[1])
 
 
 client.run(os.getenv('TOKEN'))
